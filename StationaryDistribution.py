@@ -48,28 +48,37 @@ mk2 = [
 
 
 # Simulate a Markov chain and estimate the stationary distribution
-def simulate_markov_chain(transition_matrix, steps, initial_distribution=None):
+# steps = n steps we want to simulate
+# paths = # of sample paths to take the average of
+def simulate_markov_chain(transition_matrix, steps, initial_distribution=None, paths=10):
     # Ensure the matrix is a numpy array
     P = np.array(transition_matrix)
     
     # Initializing vars
     num_states = P.shape[0]
-    visits = np.zeros(num_states)   # vector to keep track of # of visits
+    visits = np.zeros((paths, num_states))   # matrix to keep track of # of visits for each path
+    distribution_matrix = np.zeros((paths, num_states))
 
-    # Set initial distribution: uniform if not provided
-    if initial_distribution is None:
-        initial_distribution = np.ones(num_states) / num_states
+    for m in range(paths):
+        # Set initial distribution: uniform if not provided
+        if initial_distribution is None:
+            initial_distribution = np.ones(num_states) / num_states
 
-    # Start state based on the initial distribution
-    state = np.random.choice(num_states, p=initial_distribution)
+        # Start state based on the initial distribution
+        state = np.random.choice(num_states, p=initial_distribution)
 
-    # sum of visits to each to each state after n steps
-    for i in range(steps):
-        visits[state] += 1
-        state = np.random.choice(num_states, p=P[state])
+        # sum of visits to each to each state after n steps
+        for i in range(steps):
+            visits[m][state] += 1
+            state = np.random.choice(num_states, p=P[state])
+            
+        # estimated distribution is visits / steps
+        distribution_matrix[m] = visits[m] / steps
+        
+    # taking average of estimated distribution
+    estimated_distribution = np.mean(distribution_matrix, axis=0)
 
-    # estimated distribution is visits / steps
-    estimated_distribution = visits / steps
+    
     return estimated_distribution
 
 
@@ -79,7 +88,7 @@ def simulate_markov_chain(transition_matrix, steps, initial_distribution=None):
 
 # Simulated stationary distribution
 # id = np.array([1, 0, 0])
-mkc = mk1       # markov chain to simulate
+mkc = mk2       # markov chain to simulate
 
 steps = 100  # Number of steps for simulation
 simulated_pi = simulate_markov_chain(mkc, steps)
